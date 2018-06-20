@@ -1,82 +1,60 @@
-## Homework 4, Problem 1
-
+# Homework 4, Problem 1
 library(dplyr)
-
 ## Read the data
-houseWork <- read.csv('https://s3.eu-central-1.amazonaws.com/econometrics2018/data/houseWork.csv')
+houseWork <-read.csv('https://s3.eu-central-1.amazonaws.com/econometrics2018/data/houseWork.csv')
 str(houseWork)
 
 ## a)
-
-table(houseWork$sex)
-## or 
 summary(houseWork$sex)
 
 ## b)
-
-summarise(group_by(houseWork, sex),
-          averageHours = mean(hours),
-          )
+muf <- mean(houseWork$hours[houseWork$sex == 'f'])
+mum <- mean(houseWork$hours[houseWork$sex == 'm'])
 
 ## c)
-
-houseWork <- within(houseWork, {
-  female <- sex == 'f'
-  male <- sex == 'm'
-})
+houseWork$female <- ifelse(houseWork$sex == 'f', 'TRUE', 'FALSE')
+houseWork$male <- ifelse(houseWork$sex == 'm', 'TRUE', 'FALSE')
 
 ## d)
-
 fit <- lm(hours ~ female, data = houseWork)
-
-## e)
-
 summary(fit)
 
-## On average, men worked (in the house) 32.8 hours per week
-## Women worked (in the house) on average 14.45 hours less than men
+## e)
+## The intercept is positive and it shows that if no women are involved in housework
+## the work that will be done by all men is the average value of work hours by men per week
+## The other coefficient (beta1) is negative which, so we can conclude that
+## women overall work less on average so the addition of another woman would decrease the
+## overall average working hours per week.
+
+
 
 ## f)
 
-## H0: mu_f <= mu_m <=> mu_f- mu_m <= 0
-## beta1 = mu_f - mu_m (due to the coding of the variable female which is TRUE (1) for women and FALSE (0) for men)
-## it follows that H0: beta1 <= 0
+## We can rewrite the null hypothesis as: H0 beta1 >= 0
+## in this case, the alternative hypothesis would be: H1 beta1 < 0
+## This means that the null hypothesis states that women's work hours contribute to the average population work hours
+## and the alternative hypothesis states that it is the opposite
+## Given the results from the linear model, we can reject the null hypothesis, thus stating that
+## women do not contribute and in fact decrease the overall average work hours
 
 ## g)
-## Test-statistic is (from the regression output )
-## t = -45.38
-## the p-value of the test is
-n <- nrow(houseWork)
-1 - pt(-45.38, df = n - 2)
-## because the large values of the test-statistic go against the 
-## null hypothesis
+populationMean <- mean(houseWork$hours)
+testStatistic <- sqrt(11016)*(muf - populationMean) / 0.3186
+pt(testStatistic, df = 11014)
 
 ## h)
-## We do not reject the null hypothesis, because the p-value calculated
-## above is larger than 0.05.
+##There is almost zero probability for us to make a mistake when rejecting the 
+##null hypothesis if it is true. Thus we can reject the null hypothesis.
 
 ## i)
-## The t-test assumes that either that the hours spent in housework are
-## normally distributed in each group (men, women) and that the 
-## variance of hours is the same in the two groups (homoskedasticity)
-
-## The normality assumption is less problematic here because we have large sample sizes (see a)) we can rely on the central limit
-
-summarise(group_by(houseWork, sex),
-          sdHours = var(hours)
-          )
-
-## The equality of variance assumption however appears to be problematic
-## because the estimated variance of hours for men is roughly two times
-## larger than the estimated variance for women.
+## The test assumes that the population follows a t-distribution, however our expectations are that the
+## distribution is normal or normal exponential, because we are estimating time values
 
 ## j)
-## The points for this question will be substracted from
-## the required score count
+fit1 <- lm(hours ~ female + male, data = houseWork)
+summary(fit1)
+##Our model is:
+## Y = beta0 + beta1*X1 + beta2*X2. But we assume that x2 exists, i.e. that it is TRUE (equals 1) 
+##then by default X2 is FALSE (it is zero) and we cannot state its influence on the average
+##work hours.
 
-lm(hours ~ female + male, data = houseWork)
-
-## The coefficient for male cannot be estimated because
-## of multicollinearity: the dummy variables female and male add up to 1
-## for each observation and their sum is thus equal to the variable 
-## corresponding to the intercept.
